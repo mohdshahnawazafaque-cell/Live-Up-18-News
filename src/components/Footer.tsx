@@ -51,6 +51,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4 uppercase">{language === 'hi' ? 'संपर्क करें' : 'Contact Us'}</h3>
             <ul className="space-y-2 text-sm">
+              <li>{language === 'hi' ? 'संपादक/रिपोर्टर' : 'Editor/Reporter'}: मो० शाहनवाज़</li>
               <li>{language === 'hi' ? 'ईमेल' : 'Email'}: liveup18news@gmail.com</li>
               <li>{language === 'hi' ? 'वेबसाइट' : 'Website'}: <a href="https://liveup18news.netlify.app/" target="_blank" rel="noopener noreferrer" className="hover:text-red-500 transition-colors">liveup18news.netlify.app/</a></li>
             </ul>

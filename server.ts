@@ -91,6 +91,16 @@ const seedRealNews = async () => {
 loadData();
 
 // API Routes
+app.get("/api/videos", (req, res) => {
+  res.json({ success: true, videos: [{
+    id: 'v1', 
+    title: 'LIVE UP 18 - Daily News Bulletin (AI Generated)', 
+    titleEn: 'LIVE UP 18 - Daily News Bulletin (AI Generated)', 
+    url: 'https://www.youtube.com/embed/jfKfPfyJRdk', 
+    date: new Date().toISOString()
+  }] });
+});
+
 app.get("/api/news", (req, res) => {
   const { category, state, isBreaking, limit, sort } = req.query;
   let filteredNews = [...newsArticles];
@@ -125,6 +135,38 @@ app.get("/api/news/:id", (req, res) => {
     res.json(article);
   } else {
     res.status(404).json({ error: "Article not found" });
+  }
+});
+
+// Add comment to article
+app.post("/api/news/:id/comments", (req, res) => {
+  const { name, text } = req.body;
+  if (!name || !text) {
+    return res.status(400).json({ error: "Name and text are required" });
+  }
+  const article = newsArticles.find(n => n.id === req.params.id);
+  if (article) {
+    if (!article.comments) article.comments = [];
+    article.comments.push({
+      id: Math.random().toString(36).substring(7),
+      name,
+      text,
+      date: new Date().toISOString()
+    });
+    saveData();
+    res.json({ success: true, comments: article.comments });
+  } else {
+    res.status(404).json({ error: "Article not found" });
+  }
+});
+
+// Admin Login
+app.post("/api/admin/login", (req, res) => {
+  const { email, password } = req.body;
+  if (email === "liveup18news@gmail.com" && password === "Sh@sahiba9653") {
+    res.json({ success: true, token: "admin-auth-token-123" });
+  } else {
+    res.status(401).json({ success: false, error: "Invalid credentials" });
   }
 });
 
@@ -238,7 +280,7 @@ async function processRssFeed(url: string) {
         featuredImage: imageUrl,
         publicationDate: item.isoDate || item.pubDate || new Date().toISOString(),
         updatedDate: new Date().toISOString(),
-        author: feed.title || 'Live Up 18 Desk',
+        author: 'मो० शाहनवाज़',
         shortSummary: plainContent.substring(0, 150) + '...',
         shortSummaryEn: plainContent.substring(0, 150) + '...',
         keyPoints: [],

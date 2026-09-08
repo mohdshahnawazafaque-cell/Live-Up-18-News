@@ -1,9 +1,11 @@
+import React from "react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, Menu, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, Menu, X, Moon, Sun } from "lucide-react";
 import { format } from "date-fns";
 import { hi, enUS } from "date-fns/locale";
 import { useLanguage } from "../context/LanguageContext";
+import { useTheme } from "../context/ThemeContext";
 
 const NAV_ITEMS = [
   { en: "HOME", hi: "होम", path: "/" },
@@ -24,17 +26,29 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const { language, setLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
+
   const currentDate = format(new Date(), "EEEE, dd MMMM yyyy", { locale: language === 'hi' ? hi : enUS });
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
+    }
+  };
+
   return (
-    <header className="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+    <header className="bg-slate-900 dark:bg-slate-950 text-white sticky top-0 z-50 shadow-md">
       {/* Top Bar */}
-      <div className="border-b border-slate-700 bg-slate-950">
+      <div className="border-b border-slate-700 bg-slate-950 dark:bg-black">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex justify-between items-center text-sm text-slate-300">
           <div>{currentDate}</div>
-          <div className="flex gap-4">
-            <Link to="/admin" className="hover:text-red-400 font-bold text-red-500 transition-colors mr-4 flex items-center gap-1">
+          <div className="flex gap-4 items-center">
+            <Link to="/admin" className="hover:text-red-400 font-bold text-red-500 transition-colors mr-2 flex items-center gap-1">
               {language === 'hi' ? 'एडमिन' : 'Admin'}
             </Link>
             <button 
@@ -48,6 +62,13 @@ export default function Header() {
               className={`transition-colors ${language === 'hi' ? 'text-white font-bold' : 'hover:text-white'}`}
             >
               Hindi News
+            </button>
+            <button 
+              onClick={toggleTheme} 
+              className="ml-2 p-1 rounded-full hover:bg-slate-800 transition-colors"
+              title="Toggle Dark Mode"
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
         </div>
@@ -63,9 +84,7 @@ export default function Header() {
             {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
           </button>
           <Link to="/" className="flex-shrink-0 flex items-center gap-2">
-            {/* Real Logo placeholder */}
             <img src="/logo.png" alt="LIVE UP 18 NEWS" className="h-12 w-auto bg-white rounded-md p-1" onError={(e) => {
-              // Fallback if logo.png is missing
               (e.target as HTMLImageElement).style.display = 'none';
               (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
             }} />
@@ -76,26 +95,31 @@ export default function Header() {
           </Link>
         </div>
         
-        <div className="flex-1 max-w-lg mx-8 hidden md:block">
-          {/* Ad Space or Tagline */}
-        </div>
-
         <div className="flex items-center">
-          <button className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 focus:ring-offset-slate-900">
-            <Search size={20} />
-          </button>
+          <form onSubmit={handleSearch} className="flex relative">
+            <input 
+              type="text" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={language === 'hi' ? 'खोजें...' : 'Search...'}
+              className="w-full lg:w-64 bg-slate-800 dark:bg-slate-900 border border-slate-700 text-white px-4 py-2 pr-10 rounded-full focus:outline-none focus:border-red-500 transition-colors text-sm"
+            />
+            <button type="submit" className="absolute right-1 top-1 p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors focus:outline-none">
+              <Search size={16} />
+            </button>
+          </form>
         </div>
       </div>
 
       {/* Navigation */}
-      <nav className="bg-red-700 hidden lg:block">
+      <nav className="bg-red-700 dark:bg-red-900 hidden lg:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <ul className="flex flex-wrap items-center justify-start py-1">
             {NAV_ITEMS.map((item) => (
               <li key={item.en} className="whitespace-nowrap">
                 <Link 
                   to={item.path}
-                  className="inline-block px-3 py-2 text-sm font-bold text-white hover:bg-red-800 transition-colors uppercase"
+                  className="inline-block px-3 py-2 text-sm font-bold text-white hover:bg-red-800 dark:hover:bg-red-950 transition-colors uppercase"
                 >
                   {language === 'hi' ? item.hi : item.en}
                 </Link>
@@ -107,7 +131,7 @@ export default function Header() {
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <nav className="bg-red-800 lg:hidden absolute top-full left-0 right-0 shadow-xl border-t border-red-700">
+        <nav className="bg-red-800 dark:bg-red-950 lg:hidden absolute top-full left-0 right-0 shadow-xl border-t border-red-700">
           <ul className="flex flex-col py-2">
             {NAV_ITEMS.map((item) => (
               <li key={item.en}>

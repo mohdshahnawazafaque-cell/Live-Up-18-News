@@ -1,3 +1,4 @@
+import React from "react";
 import { useEffect, useState } from "react";
 import { Trash2, RefreshCw, Plus, Globe, Settings, Newspaper } from "lucide-react";
 import { NewsArticle } from "../types";
@@ -5,6 +6,10 @@ import { useLanguage, getLocalizedText } from "../context/LanguageContext";
 
 export default function Admin() {
   const { language } = useLanguage();
+  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem("adminToken") !== null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [sources, setSources] = useState<string[]>([]);
   const [newSource, setNewSource] = useState("");
@@ -12,8 +17,84 @@ export default function Admin() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (isLoggedIn) {
+      fetchData();
+    }
+  }, [isLoggedIn]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("adminToken", data.token);
+        setIsLoggedIn(true);
+      } else {
+        setLoginError(data.error || "Login failed");
+      }
+    } catch (err) {
+      setLoginError("An error occurred. Please try again.");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    setIsLoggedIn(false);
+  };
+
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-[70vh] flex items-center justify-center bg-slate-50">
+        <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-slate-200">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-2">LIVE UP 18</h1>
+            <p className="text-slate-500 font-medium">Admin Portal Login</p>
+          </div>
+          {loginError && (
+            <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-md text-sm border border-red-100">
+              {loginError}
+            </div>
+          )}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                placeholder="Admin Email"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+                placeholder="Password"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-red-600 text-white font-bold py-3 rounded-md hover:bg-red-700 transition-colors shadow-sm"
+            >
+              Login
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const fetchData = async () => {
     try {
@@ -94,14 +175,22 @@ export default function Admin() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <header className="border-b-4 border-slate-900 pb-4">
-        <h1 className="text-3xl font-black text-slate-900 uppercase flex items-center gap-2">
-          <Settings className="text-red-600" size={32} />
-          Admin & AI Partner Dashboard
-        </h1>
-        <p className="text-slate-600 mt-2 font-medium">
-          आपका AI पार्टनर हर घंटे स्वचालित रूप से (automatically) यहाँ दिए गए RSS Feeds से न्यूज़ लाकर प्रोसेस करेगा। आप भी जब चाहें मैन्युअली ट्रिगर कर सकते हैं।
-        </p>
+      <header className="border-b-4 border-slate-900 pb-4 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-black text-slate-900 uppercase flex items-center gap-2">
+            <Settings className="text-red-600" size={32} />
+            Admin & AI Partner Dashboard
+          </h1>
+          <p className="text-slate-600 mt-2 font-medium">
+            आपका AI पार्टनर हर घंटे स्वचालित रूप से (automatically) यहाँ दिए गए RSS Feeds से न्यूज़ लाकर प्रोसेस करेगा। आप भी जब चाहें मैन्युअली ट्रिगर कर सकते हैं।
+          </p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="bg-slate-200 text-slate-800 px-4 py-2 rounded font-bold hover:bg-slate-300 transition-colors text-sm"
+        >
+          Logout
+        </button>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
